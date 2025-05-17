@@ -1,10 +1,26 @@
 radio.setGroup(243)
-let myid = control.deviceSerialNumber()
+let myid = randint(0,1000)
 let myidS = myid.toString()
 let others: string[] = []
 
-function executeCommand (cmd: number) {
+function executeCommand (value: number) {
 	
+    if (value == 0) {
+        basic.showIcon(IconNames.Ghost)
+        music.play(music.builtinPlayableSoundEffect(soundExpression.mysterious), music.PlaybackMode.UntilDone)
+    } else if (value == 1) {
+        basic.showIcon(IconNames.Butterfly)
+        music.play(music.builtinPlayableSoundEffect(soundExpression.happy), music.PlaybackMode.UntilDone)
+    } else if (value == 2) {
+        basic.showIcon(IconNames.Confused)
+        music.play(music.builtinPlayableSoundEffect(soundExpression.sad), music.PlaybackMode.UntilDone)
+
+    } else if (value == 3) {
+        basic.showIcon(IconNames.Duck)
+        music.play(music.builtinPlayableSoundEffect(soundExpression.soaring), music.PlaybackMode.UntilDone)
+
+    }
+
 }
 
 function add_to_others (other: number) {
@@ -14,7 +30,11 @@ function add_to_others (other: number) {
             return
         }
     }
+    music.play(music.tonePlayable(Note.C, music.beat(BeatFraction.Whole)), music.PlaybackMode.UntilDone)
     others.push(otherS)
+
+    serial.writeValue("others", others.length)
+
 }
 radio.onReceivedValue(function (name, value) {
     
@@ -23,38 +43,51 @@ radio.onReceivedValue(function (name, value) {
     serial.writeValue(name , value )
 
     if (name == "iam") {
+        basic.showIcon(IconNames.SmallHeart)
         add_to_others(value)
         
     } else if (name == myidS) {
 
         basic.showNumber(value )
 
-    	if ( value == 0) {
-
-        } else if ( value == 1) {
-
-        } else if (value == 2 ) {
-            
-        } else if ( value ==3 ) {
-            
-        }
+        executeCommand(value)
+    
     }
+    basic.clearScreen()
 })
 
-basic.forever(function () {
-    let other = others[randint(0, others.length)] // Pick a random target
+function sendValue(value: number){
+    let idx = randint(0, others.length-1)
+    
+    let other = others[idx] // Pick a random target
+    
+    radio.sendValue(other, value)
 
+    basic.pause(250)
+}
+
+basic.forever(function () {
+    
     if(input.buttonIsPressed(Button.A)){
-        radio.sendValue(other, 0)
+        sendValue(0)
     } else if (input.buttonIsPressed(Button.B)) {
-        radio.sendValue(other, 1)
+        sendValue(1)
     } else if (input.buttonIsPressed(Button.AB)) {
-        radio.sendValue(other, 2)              
+        sendValue(2)
     } else if (input.logoIsPressed()) {
-        radio.sendValue(other, 3)
+        sendValue(3)
     } 
 })
 control.inBackground(function () {
-    radio.sendValue("iam", myid)
-    basic.pause(2000)
+
+    while (true) {
+        radio.sendValue("iam", myid)
+        basic.pause(4000)
+        basic.showIcon(IconNames.Heart)
+        basic.pause(300)
+
+        basic.clearScreen()
+        
+    }
+    
 })
